@@ -18,3 +18,4 @@ export const getKlines = async (req, res) => {
     res.status(502).json({ error: error.message });
   }
 };
+

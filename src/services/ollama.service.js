@@ -1,6 +1,5 @@
 import * as ollamaLib from "../lib/ollama.js";
 import { config } from "../lib/config.js";
-import { logger } from "../utils/logger.js";
 
 export class OllamaService {
   constructor() {
@@ -44,40 +43,9 @@ export class OllamaService {
     };
   }
 
-  async listModels() {
-    try {
-      const url = `${this.baseUrl}/api/tags`;
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.error || `HTTP ${response.status}`
-        };
-      }
-      
-      return {
-        success: true,
-        models: data.models || [],
-        defaultModel: this.model
-      };
-    } catch (error) {
-      logger.error("Failed to list models", { error: error.message });
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
+ 
 
-  async isModelAvailable(modelName = this.model) {
-    const result = await this.listModels();
-    
-    if (!result.success) return false;
-    
-    return result.models.some(model => model.name === modelName);
-  }
+  
 }
 
 export const ollamaService = new OllamaService();

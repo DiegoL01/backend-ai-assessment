@@ -1,14 +1,15 @@
 import { askService } from "../services/ask.service.js";
 
-export const handleAsk = async (req, res) => {
+
+export const handleAskController = async (req, res) => {
   try {
-    const { question } = req.body;
+    const { question , symbol } = req.body;
     
     if (!question) {
       return res.status(400).json({ error: "Question is required" });
     }
     
-    const result = await askService.processQuestion(question);
+    const result = await askService.processQuestion(question , symbol);
     
     res.json({
       success: true,

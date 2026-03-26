@@ -1,24 +1,25 @@
-import { marketService } from "./market.service.js";
-import * as ollama from "./lib/ollama.js";
+import * as marketService from "./market.service.js";
+import * as ollama from "../lib/ollama.js";
+import {
+  buildAskPrompt,
+  buildSimplePrompt,
+} from "../utils/promptBuilder.js";
 import {
   cleanMarketData,
   marketDataToText,
   getQuickRecommendation,
-  buildAskPrompt,
-  buildSimplePrompt,
-} from "../utils/promptBuilder.js";
-
+} from "../utils/marketDataCleaner.js";
 export class AskService {
-  async processQuestion(question) {
+ async processQuestion(question, symbol) {
     if (!question || typeof question !== "string" || !question.trim()) {
       throw new Error("Question is required");
     }
 
-    const marketDataRaw = await marketService.getMarketContext("BTCUSDT");
+    const marketDataRaw = await marketService.getFullMarketContext(symbol);
 
     let marketData = null;
 
-    if (marketDataRaw && marketDataRaw.stats) {
+  if (marketDataRaw && marketDataRaw.current) {
       const cleanedData = cleanMarketData(marketDataRaw);
       const textContext = marketDataToText(cleanedData);
       const recommendation = getQuickRecommendation(cleanedData);
@@ -28,11 +29,11 @@ export class AskService {
         text: textContext,
         recommendation: recommendation,
       };
-    }
 
-    const prompt = marketData?.text
-      ? buildAskPrompt(question, marketData)
-      : buildSimplePrompt(question);
+      prompt = buildAskPrompt(question, marketData);
+    } else {
+      prompt = buildSimplePrompt(question);
+    }
 
     const result = await ollama.generate(prompt);
 
@@ -44,10 +45,11 @@ export class AskService {
       answer: result.response,
       metadata: {
         usedMarketData: !!marketData,
+        symbol: symbol || "BTCUSDT",
         timestamp: new Date().toISOString(),
       },
     };
-  }
+}
 }
 
 export const askService = new AskService();

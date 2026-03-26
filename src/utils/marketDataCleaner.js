@@ -2,77 +2,52 @@
  * @param {Object} marketData
  * @returns {Object}
  */
+/**
+ * @param {Object} marketData
+ */
 export const cleanMarketData = (marketData) => {
   if (!marketData) return null;
 
+  const { symbol, current, extremes } = marketData;
+
   const cleanedData = {
-    symbol: marketData.metadata?.symbol || "BTCUSDT",
-    currency: marketData.metadata?.currency || "USD",
-    timestamp: marketData.metadata?.timestamp || new Date().toISOString(),
+    symbol: symbol || "BTCUSDT",
+    currency: "USD",
+    timestamp: new Date().toISOString(),
 
-    currentPrice: marketData.stats?.currentPrice || 0,
-    priceChange24h: marketData.stats?.change24h || "0",
-    high24h: marketData.stats?.high24h || 0,
-    low24h: marketData.stats?.low24h || 0,
+    currentPrice: parseFloat(current?.price || 0),
+    priceChange24h: current?.change24h || "0%", 
+    high24h: parseFloat(extremes?.high24h || 0),
+    low24h: parseFloat(extremes?.low24h || 0),
 
-    trend: marketData.indicator?.trend || "neutral",
-    volatility: marketData.indicator?.volatility || "medium",
-
-    priceRange:
-      marketData.stats?.high24h && marketData.stats?.low24h
-        ? (
-            ((marketData.stats.high24h - marketData.stats.low24h) /
-              marketData.stats.low24h) *
-            100
-          ).toFixed(2)
+    trend: (current?.sentiment || "neutral").toLowerCase(),
+    
+    priceRange: (extremes?.high24h && extremes?.low24h)
+        ? (((parseFloat(extremes.high24h) - parseFloat(extremes.low24h)) / parseFloat(extremes.low24h)) * 100).toFixed(2)
         : "0",
-    isBullish: marketData.indicator?.trend === "bullish",
+    
+    isBullish: current?.sentiment === "BULLISH",
   };
 
   return cleanedData;
 };
 
-/**
- * @param {Object} cleanedData
- * @returns {string}
- */
 export const marketDataToText = (cleanedData) => {
   if (!cleanedData) return "No hay datos de mercado disponibles.";
 
-  const changeSymbol = parseFloat(cleanedData.priceChange24h) >= 0 ? "+" : "";
-  const trendText =
-    cleanedData.trend === "bullish"
-      ? "BULLISH"
-      : cleanedData.trend === "bearish"
-        ? "BEARISH"
-        : "NEUTRAL";
-  const volatilityText =
-    cleanedData.volatility === "high"
-      ? "HIGH"
-      : cleanedData.volatility === "low"
-        ? "LOW"
-        : "MEDIUM";
-
   return `
-BITCOIN MARKET UPDATE
+MARKET CONTEXT: ${cleanedData.symbol}
+-----------------------------------
+- Price: $${cleanedData.currentPrice.toLocaleString()}
+- 24h Change: ${cleanedData.priceChange24h}
+- Day Range: $${cleanedData.low24h.toLocaleString()} to $${cleanedData.high24h.toLocaleString()}
+- Volatility Range: ${cleanedData.priceRange}%
+- Current Trend: ${cleanedData.trend.toUpperCase()}
 
-Current Price: $${cleanedData.currentPrice.toLocaleString()} ${cleanedData.currency}
-24h Change: ${changeSymbol}${cleanedData.priceChange24h}%
-24h Range: $${cleanedData.low24h.toLocaleString()} - $${cleanedData.high24h.toLocaleString()}
-Price Range Width: ${cleanedData.priceRange}%
-
-Market Indicators:
-- Trend: ${trendText}
-- Volatility: ${volatilityText}
-
-Data as of: ${new Date(cleanedData.timestamp).toLocaleString()}
+The market sentiment is currently ${cleanedData.trend}.
 `.trim();
 };
-
-/**
- * @param {Object} cleanedData
- * @returns {string}
- */
+ 
 export const getQuickRecommendation = (cleanedData) => {
   if (!cleanedData) return "Sin datos suficientes para recomendación.";
 
