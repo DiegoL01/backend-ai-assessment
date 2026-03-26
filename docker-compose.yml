@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./scripts:/scripts
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+    networks:
+      - app-network
+
+
+  app:
+    build: .
+    container_name: backend-ai-app
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.2
+      - OLLAMA_TIMEOUT_MS=120000
+      - BINANCE_BASE_URL=https://api.binance.com
+      - MARKET_SYMBOL=BTCUSDT
+    volumes:
+      - ./src:/app/src
+      - /app/node_modules
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    networks:
+      - app-network
+
+volumes:
+  ollama_data:
+
+networks:
+  app-network:
+    driver: bridge

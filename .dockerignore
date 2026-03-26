@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+README.md
+.vscode
+.DS_Store
+logs
+*.log
+coverage
+.nyc_output
+.DS_Store
+*.pem
+*.key
+*.cert
